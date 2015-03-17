@@ -31,6 +31,13 @@ bool sqlite_init(std::string& error) {
         error = std::string(sqlite3_errmsg(db));
         return false;
     }
+    sql = "DELETE FROM detectproj WHERE status = 'wait'";
+    /* Execute SQL statement */
+    rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
+    if (rc != SQLITE_OK) {
+        error = std::string(sqlite3_errmsg(db));
+        return false;
+    }
     return true;
 }
 
