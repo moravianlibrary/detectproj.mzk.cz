@@ -2,4 +2,4 @@
 
 /etc/init.d/lighttpd start
 
-/bin/bash
+while :; do /bin/bash; sleep 1; done
