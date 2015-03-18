@@ -5,7 +5,7 @@ bool header_printed = false;
 void print_header() {
     if (!header_printed) {
         FCGI_printf("Content-type: application/json\r\n");
-        FCGI_printf("Access-Control-Allow-Origin: staremapy.georeferencer.cz\r\n\r\n");
+        FCGI_printf("Access-Control-Allow-Origin: http://staremapy.georeferencer.cz\r\n\r\n");
         header_printed = true;
     }
 }
