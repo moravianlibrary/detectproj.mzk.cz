@@ -7,6 +7,7 @@
 
 #include <string>
 #include "fcgi_stdio.h"
+#include "jsoncpp/json/json.h"
 
 void output_init();
 

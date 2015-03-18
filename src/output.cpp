@@ -26,5 +26,9 @@ void print_processed() {
 
 void print_error(const std::string& msg) {
     print_header();
-    FCGI_printf("{\"status\" : \"Error\", \"message\" : \"%s\"}", msg.c_str());
+    Json::Value root;
+    root["status"] = Json::Value("Error");
+    root["message"] = Json::Value(msg);
+    Json::FastWriter writer;
+    FCGI_printf(writer.write(root).c_str());
 }

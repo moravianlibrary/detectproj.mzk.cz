@@ -15,7 +15,7 @@
 #include <assert.h>
 
 #include "fcgi_stdio.h"
-#include "jsoncpp/json/reader.h"
+#include "jsoncpp/json/json.h"
 
 #include "output.h"
 #include "sqlite.h"
