@@ -32,3 +32,12 @@ void print_error(const std::string& msg) {
     Json::FastWriter writer;
     FCGI_printf(writer.write(root).c_str());
 }
+
+void print_detectproj_error(const std::string& msg) {
+    print_header();
+    Json::Value root;
+    root["status"] = Json::Value("DetectprojError");
+    root["message"] = Json::Value(msg);
+    Json::FastWriter writer;
+    FCGI_printf(writer.write(root).c_str());
+}

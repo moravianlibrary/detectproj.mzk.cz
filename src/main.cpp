@@ -89,6 +89,8 @@ int main(int argc, char** argv) {
                 continue;
             }
             print_processed();
+        } else if (sql_res == DETECTPROJ_ERROR) {
+            print_detectproj_error(proj_res);
         } else {
             print_error(proj_res);
         }
@@ -249,7 +251,7 @@ void detectproj(const string& map) {
     if (detectproj(interest_test_points, interest_ref_points, out, err)) {
         set_proj(map, out.str());
     } else {
-        set_error(map, err.str());
+        set_detectproj_error(map, err.str());
     }
 }
 

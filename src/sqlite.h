@@ -10,7 +10,7 @@
 #include "output.h"
 
 enum result_code {
-    ERROR, DONE, PROCESSED, NOT_FOUND
+    ERROR, DETECTPROJ_ERROR, DONE, PROCESSED, NOT_FOUND
 };
 
 extern sqlite3 *db;
@@ -22,5 +22,7 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
 bool set_proj(const std::string& map, const std::string& value);
 
 bool set_error(const std::string& map, const std::string& value);
+
+bool set_detectproj_error(const std::string& map, const std::string& value);
 
 #endif

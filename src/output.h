@@ -17,4 +17,6 @@ void print_processed();
 
 void print_error(const std::string& msg);
 
+void print_detectproj_error(const std::string& msg);
+
 #endif

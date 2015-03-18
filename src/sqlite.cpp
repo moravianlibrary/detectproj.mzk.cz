@@ -111,6 +111,11 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
             return false;
         }
         result_code = ERROR;
+    } else if (status == "detectproj_error") {
+        if (!get_column_value(map, "geojson", result)) {
+            return false;
+        }
+        result_code = DETECTPROJ_ERROR;
     } else if (status == "done") {
         if (!get_column_value(map, "geojson", result)) {
             return false;
@@ -177,6 +182,29 @@ bool set_error(const std::string& map, const std::string& value) {
     sqlite3_stmt* stmt;
 
     sql = "INSERT OR REPLACE INTO detectproj(map, status, geojson) VALUES (?, 'error', ?)";
+    rc = sqlite3_prepare(db, sql.c_str(), -1, &stmt, NULL);
+    if (rc != SQLITE_OK) {
+        print_error(std::string(sqlite3_errmsg(db)));
+        return false;
+    }
+    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 2, value.c_str(), value.size(), NULL);
+
+    rc = sqlite3_step(stmt);
+    if (rc != SQLITE_DONE) {
+        print_error(std::string(sqlite3_errmsg(db)));
+        return false;
+    }
+    return true;
+}
+
+bool set_detectproj_error(const std::string& map, const std::string& value) {
+    char *zErrMsg = 0;
+    int rc;
+    std::string sql;
+    sqlite3_stmt* stmt;
+
+    sql = "INSERT OR REPLACE INTO detectproj(map, status, geojson) VALUES (?, 'detectproj_error', ?)";
     rc = sqlite3_prepare(db, sql.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         print_error(std::string(sqlite3_errmsg(db)));
