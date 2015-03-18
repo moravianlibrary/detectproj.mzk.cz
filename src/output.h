@@ -12,7 +12,7 @@ void output_init();
 
 void print(const std::string& msg);
 
-void print_wait();
+void print_processed();
 
 void print_error(const std::string& msg);
 

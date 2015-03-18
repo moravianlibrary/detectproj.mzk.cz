@@ -31,7 +31,7 @@ bool sqlite_init(std::string& error) {
         error = std::string(sqlite3_errmsg(db));
         return false;
     }
-    sql = "DELETE FROM detectproj WHERE status = 'wait'";
+    sql = "DELETE FROM detectproj WHERE status = 'processed'";
     /* Execute SQL statement */
     rc = sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -72,13 +72,13 @@ static bool get_column_value(const std::string& map, const std::string& column, 
     return true;
 }
 
-static bool set_wait_flag(const std::string& map) {
+static bool set_processed_flag(const std::string& map) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
     sqlite3_stmt* stmt;
 
-    sql = "INSERT OR REPLACE INTO detectproj(map, status) VALUES (?, 'wait')";
+    sql = "INSERT OR REPLACE INTO detectproj(map, status) VALUES (?, 'processed')";
     rc = sqlite3_prepare(db, sql.c_str(), -1, &stmt, NULL);
     if (rc != SQLITE_OK) {
         print_error(std::string(sqlite3_errmsg(db)));
@@ -104,8 +104,8 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
         return false;
     }
 
-    if (status == "wait") {
-        result_code = WAIT;
+    if (status == "processed") {
+        result_code = PROCESSED;
     } else if (status == "error") {
         result_code = ERROR;
     } else if (status == "done") {
@@ -123,7 +123,7 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
             return false;
         }
         if (status == "not_found") {
-            if (!set_wait_flag(map)) {
+            if (!set_processed_flag(map)) {
                 sql = "ROLLBACK;";
                 sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
                 return false;
@@ -131,7 +131,7 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
         } else {
             sql = "END;";
             sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
-            result_code = WAIT;
+            result_code = PROCESSED;
             return true;
         }
         sql = "COMMIT;";

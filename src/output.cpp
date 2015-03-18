@@ -4,7 +4,8 @@ bool header_printed = false;
 
 void print_header() {
     if (!header_printed) {
-        FCGI_printf("Content-type: application/json\r\n\r\n");
+        FCGI_printf("Content-type: application/json\r\n");
+        FCGI_printf("Access-Control-Allow-Origin: staremapy.georeferencer.cz\r\n\r\n");
         header_printed = true;
     }
 }
@@ -18,9 +19,9 @@ void print(const std::string& msg) {
     FCGI_printf("{\"status\" : \"Done\", \"geojson\": %s}", msg.c_str());
 }
 
-void print_wait() {
+void print_processed() {
     print_header();
-    FCGI_printf("{\"status\" : \"Wait\"}");
+    FCGI_printf("{\"status\" : \"Processed\"}");
 }
 
 void print_error(const std::string& msg) {

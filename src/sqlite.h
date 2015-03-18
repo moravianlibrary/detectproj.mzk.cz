@@ -10,7 +10,7 @@
 #include "output.h"
 
 enum result_code {
-    ERROR, DONE, WAIT, NOT_FOUND
+    ERROR, DONE, PROCESSED, NOT_FOUND
 };
 
 extern sqlite3 *db;

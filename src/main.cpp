@@ -77,13 +77,13 @@ int main(int argc, char** argv) {
         }
         if (sql_res == DONE) {
             print(proj_res);
-        } else if (sql_res == WAIT) {
-            print_wait();
+        } else if (sql_res == PROCESSED) {
+            print_processed();
         } else if (sql_res == NOT_FOUND) {
             if (!run_detectproj(map)) {
                 continue;
             }
-            print_wait();
+            print_processed();
         } else {
             print_error("Wrong data.");
         }
