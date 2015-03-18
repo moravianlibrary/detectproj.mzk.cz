@@ -169,8 +169,8 @@ void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vecto
             maxy = point->getY();
         }
     }
-    double w = maxx - minx;
-    double h = maxy - miny;
+    double w = abs(maxx - minx);
+    double h = abs(maxy - miny);
     for (int i = 0; i < m; i++) {
         for (int j = 0; j < n; j++) {
             double x = i*(w/m) + (w/(2*m));
