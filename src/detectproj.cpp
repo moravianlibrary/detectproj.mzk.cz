@@ -9,7 +9,7 @@ void detectproj_init() {
     proj_list.load(PROJECTIONS_FILE);
 }
 
-bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out) {
+bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out, std::ostream& err) {
     std::ofstream blackhole("/dev/null");
     TAnalysisParameters <double> analysis_parameters;
     TAnalyzedProjParametersList <double> ::Type analyzed_proj_parameters_list;
@@ -31,7 +31,7 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
 
     const unsigned int n_test = nl_test.size(), n_reference = nl_reference.size();
     if ( n_test != n_reference ) {
-        print_error("ErroBadData: different number of test and reference points");
+        err << "ErroBadData: different number of test and reference points";
         return false;
     }
     //Find and remove duplicate points
@@ -43,19 +43,19 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
 
     //Not enough unique points
     if ( n_test_unique < 3 ) {
-        print_error("ErroBadData: insufficient number of unique points ( at least 3 )");
+        err << "ErroBadData: insufficient number of unique points ( at least 3 )";
         return false;
     }
 
     if ( n_test_unique != n_reference_unique ) {
-        print_error("ErroBadData: number of unique points in both files different");
+        err << "ErroBadData: number of unique points in both files different";
         return false;
     }
 
     //Lat/lon values outside the limits
     for ( unsigned int i = 0; i < n_test_unique; i++ ) {
         if ( ( fabs ( nl_reference[i]->getLat() ) > MAX_LAT ) || ( fabs ( nl_reference[i]->getLon() ) > MAX_LON ) ) {
-            print_error( "ErroBadData: latitude or longitude outside intervals");
+            err << "ErroBadData: latitude or longitude outside intervals";
             return false;
         }
     }
@@ -130,7 +130,7 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
         //Throw exception
         catch ( Error & error )
         {
-            print_error(string(error.getExceptionText()));
+            err << error.getExceptionText();
             return false;
         }
     }
@@ -169,11 +169,11 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
     if ( sl.size() == 0 )
     {
         if ( analysis_parameters.analysis_repeat == 0 ) {
-            print_error( "ErrorBadData: no sample had been computed. Try to increase heuristic sensitivity ratio \"sens\", disable heuristic or check projection equations." );
+            err << "ErrorBadData: no sample had been computed. Try to increase heuristic sensitivity ratio \"sens\", disable heuristic or check projection equations.";
             return false;
         }
         else {
-            print_error( "ErrorBadData: no sample had been computed. Disable heuristic or check projection equations." );
+            err << "ErrorBadData: no sample had been computed. Disable heuristic or check projection equations.";
             return false;
         }
     }

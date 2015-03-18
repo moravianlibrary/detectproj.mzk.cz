@@ -3,7 +3,6 @@
 
 #include <vector>
 #include <ostream>
-#include "output.h"
 
 #include "libalgo/source/structures/point/Node3DCartesianProjected.h"
 #include "libalgo/source/structures/point/Node3DCartesian.h"
@@ -47,6 +46,6 @@ extern const char* PROJECTIONS_FILE;
 
 void detectproj_init();
 
-bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out);
+bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out, std::ostream& err);
 
 #endif

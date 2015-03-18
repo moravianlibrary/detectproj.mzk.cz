@@ -35,7 +35,7 @@ string get_json_uri(const string& map);
 
 bool parse_json(const string& data, Value& root);
 
-bool detectproj(const string& map);
+void detectproj(const string& map);
 
 bool run_detectproj(const string& map);
 
@@ -90,7 +90,7 @@ int main(int argc, char** argv) {
             }
             print_processed();
         } else {
-            print_error("Wrong data.");
+            print_error(proj_res);
         }
     }
 }
@@ -204,27 +204,29 @@ string get_json_uri(const string& map) {
     return "/map/" + map + "/json";
 }
 
-bool detectproj(const string& map) {
+void detectproj(const string& map) {
     string json_uri;
     string json_data;
     // read JSON data
     json_uri = get_json_uri(map);
     if (!do_get("staremapy.georeferencer.cz", json_uri, json_data)) {
-        return false;
+        return;
     }
     Value json;
     if (!parse_json(json_data, json)) {
-        print_error("Error at parsing JSON.");
-        return false;
+        set_error(map, "Error at parsing JSON.");
+        return;
     }
     vector<Node3DCartesian <double> *> test_points;
     vector<Point3DGeographic <double> *> ref_points;
 
     if (!parse_points<Node3DCartesian <double> >(json, test_points, TEST_POINT_X, TEST_POINT_Y)) {
-        return false;
+        set_error(map, "Error at parsing JSON.");
+        return;
     }
     if (!parse_points<Point3DGeographic <double> >(json, ref_points, REF_POINT_X, REF_POINT_Y)) {
-        return false;
+        set_error(map, "Error at parsing JSON.");
+        return;
     }
     for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
         Node3DCartesian <double> * point = *it;
@@ -241,11 +243,14 @@ bool detectproj(const string& map) {
     assert(test_points.empty());
     assert(ref_points.empty());
 
-    stringstream ss;
+    stringstream out;
+    stringstream err;
 
-    detectproj(interest_test_points, interest_ref_points, ss);
-    set_proj(map, ss.str());
-    return true;
+    if (detectproj(interest_test_points, interest_ref_points, out, err)) {
+        set_proj(map, out.str());
+    } else {
+        set_error(map, err.str());
+    }
 }
 
 bool run_detectproj(const string& map) {

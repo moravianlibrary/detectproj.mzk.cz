@@ -21,4 +21,6 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
 
 bool set_proj(const std::string& map, const std::string& value);
 
+bool set_error(const std::string& map, const std::string& value);
+
 #endif
