@@ -213,6 +213,11 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
     double alpha = sl[0].getAlpha();
     Graticule::computeGraticule ( proj, lat_interval, lon_interval, analysis_parameters.lat_step, analysis_parameters.lon_step, 0.1 * analysis_parameters.lat_step, 0.1 * analysis_parameters.lon_step, alpha, TransformedGraticule, meridians_exp, parallels_exp, &mer_par_points, index );
 
+    if (meridians_exp.size() == 0 && parallels_exp.size() == 0) {
+        err << "No projection was found.";
+        return false;
+    }
+
     //Export graticule into GeoJSON
     GeoJSONExport::exportGraticule( out, meridians_exp, parallels_exp, mer_par_points, font_height, analysis_parameters.lat_step, analysis_parameters.lon_step );
 
