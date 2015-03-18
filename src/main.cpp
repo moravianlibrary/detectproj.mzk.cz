@@ -6,10 +6,13 @@
 #include <cstdlib>
 #include <map>
 #include <sstream>
+#include <limits>
+#include <math.h>
 #include <unistd.h>    /* define fork(), etc.   */
 #include <sys/types.h> /* define pid_t, etc.    */
 #include <sys/wait.h>  /* define wait(), etc.   */
 #include <signal.h>    /* define signal(), etc. */
+#include <assert.h>
 
 #include "fcgi_stdio.h"
 #include "jsoncpp/json/reader.h"
@@ -37,6 +40,8 @@ bool detectproj(const string& map);
 bool run_detectproj(const string& map);
 
 template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y);
+
+void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vector<Point3DGeographic <double> *>& ref_points, vector<Node3DCartesian <double> *>& out_test, vector<Point3DGeographic <double> *>& out_ref, int m, int n);
 
 void catch_child(int sig_num);
 
@@ -105,7 +110,7 @@ template<typename T> bool parse_points(const Value& json, vector<T*>& points, co
         print_error(CONTROL_POINTS + " must be Array.");
         return false;
     }
-    for (int i = 0; i < control_points.size() && i < 10; i++) {
+    for (int i = 0; i < control_points.size(); i++) {
         Value item = control_points[i];
         if (!item.isMember(key_x)) {
             print_error(key_x + " is not presented.");
@@ -129,6 +134,70 @@ template<typename T> bool parse_points(const Value& json, vector<T*>& points, co
         points.push_back(point);
     }
     return true;
+}
+
+void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vector<Point3DGeographic <double> *>& ref_points, vector<Node3DCartesian <double> *>& out_test, vector<Point3DGeographic <double> *>& out_ref, int m, int n) {
+    if (test_points.size() < m * n) {
+        for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
+            out_test.push_back(*it);
+            test_points.erase(it);
+        }
+        for (vector<Point3DGeographic <double> *>::iterator it = ref_points.begin(); it != ref_points.end(); it++) {
+            out_ref.push_back(*it);
+            ref_points.erase(it);
+        }
+        return;
+    }
+
+    // find bounding box
+    double minx = numeric_limits<double>::max(), miny = numeric_limits<double>::max();
+    double maxx = numeric_limits<double>::min(), maxy = numeric_limits<double>::min();
+    for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
+        Node3DCartesian <double> * point = *it;
+        if (point->getX() < minx) {
+            minx = point->getX();
+        }
+        if (point->getX() > maxx) {
+            maxx = point->getX();
+        }
+        if (point->getY() < miny) {
+            miny = point->getY();
+        }
+        if (point->getY() > maxy) {
+            maxy = point->getY();
+        }
+    }
+    double w = maxx - minx;
+    double h = maxy - miny;
+    for (int i = 0; i < m; i++) {
+        for (int j = 0; j < n; j++) {
+            double x = i*(w/m) + (w/(2*m));
+            double y = j*(h/n) + (h/(2*n));
+            double mindistance = numeric_limits<double>::max();
+            vector<Node3DCartesian <double> *>::iterator nearest_point;
+            for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
+                Node3DCartesian <double> * point = *it;
+                double distance = sqrt(pow(x - point->getX(), 2) + pow(y - point->getY(), 2));
+                if (distance < mindistance) {
+                    mindistance = distance;
+                    nearest_point = it;
+                }
+            }
+            int nearest_point_index = nearest_point - test_points.begin();
+            out_test.push_back(*nearest_point);
+            out_ref.push_back(ref_points[nearest_point_index]);
+            ref_points.erase(ref_points.begin() + nearest_point_index);
+            test_points.erase(nearest_point);
+        }
+    }
+    for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end();) {
+        delete *it;
+        it = test_points.erase(it);
+    }
+    for (vector<Point3DGeographic <double> *>::iterator it = ref_points.begin(); it != ref_points.end();) {
+        delete *it;
+        it = ref_points.erase(it);
+    }
 }
 
 string get_json_uri(const string& map) {
@@ -161,8 +230,20 @@ bool detectproj(const string& map) {
         Node3DCartesian <double> * point = *it;
         point->setY(point->getY() * -1.0);
     }
+
+    vector<Node3DCartesian <double> *> interest_test_points;
+    vector<Point3DGeographic <double> *> interest_ref_points;
+
+    find_interest_points(test_points, ref_points, interest_test_points, interest_ref_points, 3, 3);
+
+    assert(interest_test_points.size() == interest_ref_points.size());
+    assert(interest_test_points.size() == 9);
+    assert(test_points.empty());
+    assert(ref_points.empty());
+
     stringstream ss;
-    detectproj(test_points, ref_points, ss);
+
+    detectproj(interest_test_points, interest_ref_points, ss);
     set_proj(map, ss.str());
     return true;
 }

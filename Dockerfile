@@ -41,7 +41,8 @@ COPY src/sqlite.cpp /build/detectproj/sqlite.cpp
 COPY src/sqlite.h /build/detectproj/sqlite.h
 COPY src/detectproj.cpp /build/detectproj/detectproj.cpp
 COPY src/detectproj.h /build/detectproj/detectproj.h
-RUN g++ /build/detectproj/*.cpp -ansi -O2 -lfcgi -ljsoncpp -luriparser -lalgo -lneon -lsqlite3 -o /usr/local/bin/detectproj
+
+RUN g++ /build/detectproj/*.cpp -ansi -O2 -lfcgi -ljsoncpp -luriparser -lalgo -lneon -lsqlite3 -lm -o /usr/local/bin/detectproj
 
 COPY init.sh /init.sh
 
