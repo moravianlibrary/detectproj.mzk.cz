@@ -8,15 +8,18 @@ RUN apt-get install -y \
     build-essential \
     automake \
     libtool \
-    git \
+    wget \
+    ca-certificates \
+    unzip \
     libfcgi-dev \
     libjsoncpp-dev \
     libsqlite3-dev
 
 RUN mkdir /build
 RUN cd /build && \
-    git clone https://github.com/moravianlibrary/libalgo && \
-    cd libalgo && \
+    wget https://github.com/moravianlibrary/libalgo/archive/1.15.zip -O libalgo.zip && \
+    unzip libalgo.zip && \
+    cd libalgo-* && \
     libtoolize && \
     autoreconf -i && \
     ./configure && \
