@@ -17,12 +17,12 @@ extern sqlite3 *db;
 
 bool sqlite_init(std::string& error);
 
-bool get_proj(const std::string& map, result_code& result_code, std::string& result);
+bool get_proj(const std::string& id, result_code& result_code, std::string& result);
 
-bool set_proj(const std::string& map, const std::string& value);
+bool set_proj(const std::string& id, const std::string& value);
 
-bool set_error(const std::string& map, const std::string& value);
+bool set_error(const std::string& id, const std::string& value);
 
-bool set_detectproj_error(const std::string& map, const std::string& value);
+bool set_detectproj_error(const std::string& id, const std::string& value);
 
 #endif

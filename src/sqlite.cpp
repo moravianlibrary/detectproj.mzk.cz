@@ -41,7 +41,7 @@ bool sqlite_init(std::string& error) {
     return true;
 }
 
-static bool get_column_value(const std::string& map, const std::string& column, std::string& value) {
+static bool get_column_value(const std::string& id, const std::string& column, std::string& value) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
@@ -54,8 +54,7 @@ static bool get_column_value(const std::string& map, const std::string& column, 
         print_error(std::string(sqlite3_errmsg(db)));
         return false;
     }
-    //sqlite3_bind_text(stmt, 1, column.c_str(), column.size(), NULL);
-    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), NULL);
 
     rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
@@ -72,7 +71,7 @@ static bool get_column_value(const std::string& map, const std::string& column, 
     return true;
 }
 
-static bool set_processed_flag(const std::string& map) {
+static bool set_processed_flag(const std::string& id) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
@@ -84,7 +83,7 @@ static bool set_processed_flag(const std::string& map) {
         print_error(std::string(sqlite3_errmsg(db)));
         return false;
     }
-    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), NULL);
 
     rc = sqlite3_step(stmt);
     if (rc != SQLITE_DONE) {
@@ -94,30 +93,30 @@ static bool set_processed_flag(const std::string& map) {
     return true;
 }
 
-bool get_proj(const std::string& map, result_code& result_code, std::string& result) {
+bool get_proj(const std::string& id, result_code& result_code, std::string& result) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
     std::string status = "not_found";
 
-    if (!get_column_value(map, "status", status)) {
+    if (!get_column_value(id, "status", status)) {
         return false;
     }
 
     if (status == "processed") {
         result_code = PROCESSED;
     } else if (status == "error") {
-        if (!get_column_value(map, "geojson", result)) {
+        if (!get_column_value(id, "geojson", result)) {
             return false;
         }
         result_code = ERROR;
     } else if (status == "detectproj_error") {
-        if (!get_column_value(map, "geojson", result)) {
+        if (!get_column_value(id, "geojson", result)) {
             return false;
         }
         result_code = DETECTPROJ_ERROR;
     } else if (status == "done") {
-        if (!get_column_value(map, "geojson", result)) {
+        if (!get_column_value(id, "geojson", result)) {
             return false;
         }
         result_code = DONE;
@@ -125,13 +124,13 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
         sql = "BEGIN EXCLUSIVE;";
         sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
 
-        if (!get_column_value(map, "status", status)) {
+        if (!get_column_value(id, "status", status)) {
             sql = "ROLLBACK;";
             sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
             return false;
         }
         if (status == "not_found") {
-            if (!set_processed_flag(map)) {
+            if (!set_processed_flag(id)) {
                 sql = "ROLLBACK;";
                 sqlite3_exec(db, sql.c_str(), NULL, 0, &zErrMsg);
                 return false;
@@ -152,7 +151,7 @@ bool get_proj(const std::string& map, result_code& result_code, std::string& res
     return true;
 }
 
-bool set_proj(const std::string& map, const std::string& value) {
+bool set_proj(const std::string& id, const std::string& value) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
@@ -164,7 +163,7 @@ bool set_proj(const std::string& map, const std::string& value) {
         print_error(std::string(sqlite3_errmsg(db)));
         return false;
     }
-    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), NULL);
     sqlite3_bind_text(stmt, 2, value.c_str(), value.size(), NULL);
 
     rc = sqlite3_step(stmt);
@@ -175,7 +174,7 @@ bool set_proj(const std::string& map, const std::string& value) {
     return true;
 }
 
-bool set_error(const std::string& map, const std::string& value) {
+bool set_error(const std::string& id, const std::string& value) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
@@ -187,7 +186,7 @@ bool set_error(const std::string& map, const std::string& value) {
         print_error(std::string(sqlite3_errmsg(db)));
         return false;
     }
-    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), NULL);
     sqlite3_bind_text(stmt, 2, value.c_str(), value.size(), NULL);
 
     rc = sqlite3_step(stmt);
@@ -198,7 +197,7 @@ bool set_error(const std::string& map, const std::string& value) {
     return true;
 }
 
-bool set_detectproj_error(const std::string& map, const std::string& value) {
+bool set_detectproj_error(const std::string& id, const std::string& value) {
     char *zErrMsg = 0;
     int rc;
     std::string sql;
@@ -210,7 +209,7 @@ bool set_detectproj_error(const std::string& map, const std::string& value) {
         print_error(std::string(sqlite3_errmsg(db)));
         return false;
     }
-    sqlite3_bind_text(stmt, 1, map.c_str(), map.size(), NULL);
+    sqlite3_bind_text(stmt, 1, id.c_str(), id.size(), NULL);
     sqlite3_bind_text(stmt, 2, value.c_str(), value.size(), NULL);
 
     rc = sqlite3_step(stmt);

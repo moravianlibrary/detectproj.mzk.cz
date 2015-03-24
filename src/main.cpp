@@ -20,7 +20,6 @@
 #include "output.h"
 #include "sqlite.h"
 #include "detectproj.h"
-#include "http.h"
 
 using namespace std;
 using namespace Json;
@@ -31,13 +30,13 @@ const string REF_POINT_Y = "longitude";
 const string TEST_POINT_X = "pixel_x";
 const string TEST_POINT_Y = "pixel_y";
 
-string get_json_uri(const string& map);
+void read_post(stringstream& ss);
 
-bool parse_json(const string& data, Value& root);
+bool parse_json(istream& is, Value& root);
 
-void detectproj(const string& map);
+void detectproj(const string& id, const Value& json);
 
-bool run_detectproj(const string& map);
+bool run_detectproj(const string& id, const Value& json);
 
 template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y);
 
@@ -55,29 +54,44 @@ int main(int argc, char** argv) {
     sqlite_init_res = sqlite_init(error);
 
     while(FCGI_Accept() >= 0) {
-        char* request_uri;
-        map<string, string> params;
-        string map;
+        string name;
+        string version;
+        string id;
         result_code sql_res;
         string proj_res;
+        stringstream post;
+        Value json;
 
         output_init();
         if (!sqlite_init_res) {
             print_error(error);
             continue;
         }
-        // read GET URI
-        request_uri = getenv("REQUEST_URI");
-        if (!parse_uri(request_uri, params)) {
-            continue;
-        }
-        if (!params.count("map")) {
-            print_error("Parameter map must be presented.");
-            continue;
-        }
-        map = params["map"];
+        // read POST
+        read_post(post);
+        parse_json(post, json);
 
-        if (!get_proj(map, sql_res, proj_res)) {
+        if (!json.isMember("name")) {
+            print_error("Parameter name must be presented.");
+            continue;
+        }
+        if (!json["name"].isString()) {
+            print_error("Parameter name must be string.");
+            continue;
+        }
+        if (!json.isMember("version")) {
+            print_error("Parameter version must be presented.");
+            continue;
+        }
+        if (!json["version"].isString()) {
+            print_error("Parameter version must be string.");
+            continue;
+        }
+        name = json["name"].asString();
+        version = json["version"].asString();
+        id = name + "/" + version;
+
+        if (!get_proj(id, sql_res, proj_res)) {
             continue;
         }
         if (sql_res == DONE) {
@@ -85,7 +99,7 @@ int main(int argc, char** argv) {
         } else if (sql_res == PROCESSED) {
             print_processed();
         } else if (sql_res == NOT_FOUND) {
-            if (!run_detectproj(map)) {
+            if (!run_detectproj(id, json)) {
                 continue;
             }
             print_processed();
@@ -97,9 +111,14 @@ int main(int argc, char** argv) {
     }
 }
 
-bool parse_json(const string& data, Value& root) {
+void read_post(stringstream& ss) {
+    int c;
+    while ((c = FCGI_getchar()) != EOF) ss << (char) c;
+}
+
+bool parse_json(istream& is, Value& root) {
     Reader reader;
-    return reader.parse(data, root);
+    return reader.parse(is, root);
 }
 
 template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y) {
@@ -202,32 +221,16 @@ void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vecto
     }
 }
 
-string get_json_uri(const string& map) {
-    return "/map/" + map + "/json";
-}
-
-void detectproj(const string& map) {
-    string json_uri;
-    string json_data;
-    // read JSON data
-    json_uri = get_json_uri(map);
-    if (!do_get("staremapy.georeferencer.cz", json_uri, json_data)) {
-        return;
-    }
-    Value json;
-    if (!parse_json(json_data, json)) {
-        set_error(map, "Error at parsing JSON.");
-        return;
-    }
+void detectproj(const string& id, const Value& json) {
     vector<Node3DCartesian <double> *> test_points;
     vector<Point3DGeographic <double> *> ref_points;
 
     if (!parse_points<Node3DCartesian <double> >(json, test_points, TEST_POINT_X, TEST_POINT_Y)) {
-        set_error(map, "Error at parsing JSON.");
+        set_error(id, "Error at parsing JSON.");
         return;
     }
     if (!parse_points<Point3DGeographic <double> >(json, ref_points, REF_POINT_X, REF_POINT_Y)) {
-        set_error(map, "Error at parsing JSON.");
+        set_error(id, "Error at parsing JSON.");
         return;
     }
     for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
@@ -249,17 +252,18 @@ void detectproj(const string& map) {
     stringstream err;
 
     if (detectproj(interest_test_points, interest_ref_points, out, err)) {
-        set_proj(map, out.str());
+        set_proj(id, out.str());
     } else {
-        set_detectproj_error(map, err.str());
+        set_detectproj_error(id, err.str());
     }
+
 }
 
-bool run_detectproj(const string& map) {
+bool run_detectproj(const string& id, const Value& json) {
     pid_t pid = fork();
 
     if (pid == 0) {
-        detectproj(map);
+        detectproj(id, json);
         exit(0);
     } else if (pid > 0) {
         return true;

@@ -11,8 +11,6 @@ RUN apt-get install -y \
     git \
     libfcgi-dev \
     libjsoncpp-dev \
-    liburiparser-dev \
-    libneon27-dev \
     libsqlite3-dev
 
 RUN mkdir /build
@@ -35,14 +33,12 @@ COPY projections.txt /usr/local/detectproj/projections.txt
 COPY src/main.cpp /build/detectproj/main.cpp
 COPY src/output.cpp /build/detectproj/output.cpp
 COPY src/output.h /build/detectproj/output.h
-COPY src/http.cpp /build/detectproj/http.cpp
-COPY src/http.h /build/detectproj/http.h
 COPY src/sqlite.cpp /build/detectproj/sqlite.cpp
 COPY src/sqlite.h /build/detectproj/sqlite.h
 COPY src/detectproj.cpp /build/detectproj/detectproj.cpp
 COPY src/detectproj.h /build/detectproj/detectproj.h
 
-RUN g++ /build/detectproj/*.cpp -ansi -O2 -lfcgi -ljsoncpp -luriparser -lalgo -lneon -lsqlite3 -lm -o /usr/local/bin/detectproj
+RUN g++ /build/detectproj/*.cpp -ansi -O2 -lfcgi -ljsoncpp -lalgo -lsqlite3 -lm -o /usr/local/bin/detectproj
 
 COPY init.sh /init.sh
 
