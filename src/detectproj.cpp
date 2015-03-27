@@ -182,44 +182,50 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
     CartAnalysis::sortSamplesByComputedRatios ( sl, analysis_parameters.analysis_type );
 
     //Create graticules
-    //Get a sample projection
-    Projection <double> *proj = sl[0].getProj();
-    //Set properties for a projection
-    proj->setR ( sl[0].getR() );
-    Point3DGeographic <double> cart_pole ( sl[0].getLatP(), sl[0].getLonP() );
-    proj->setCartPole ( cart_pole );
-    proj->setLat0 ( sl[0].getLat0() );
-    proj->setLon0 ( sl[0].getLon0() );
-    proj->setDx ( sl[0].getDx() );
-    proj->setDy ( sl[0].getDy() );
-    proj->setC ( sl[0].getC() );
+    for ( unsigned int i = 0; i < std::min ( ( unsigned int ) analysis_parameters.exported_graticule, sl.size() ); i++ ) {
+        //Get a sample projection
+        Projection <double> *proj = sl[i].getProj();
+        //Set properties for a projection
+        proj->setR ( sl[i].getR() );
+        Point3DGeographic <double> cart_pole ( sl[i].getLatP(), sl[i].getLonP() );
+        proj->setCartPole ( cart_pole );
+        proj->setLat0 ( sl[i].getLat0() );
+        proj->setLon0 ( sl[i].getLon0() );
+        proj->setDx ( sl[i].getDx() );
+        proj->setDy ( sl[i].getDy() );
+        proj->setC ( sl[i].getC() );
 
-    //Get limits
-    TMinMax <double> lon_interval ( ( * std::min_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLon () ) )->getLon(),
-            ( * std::max_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLon () ) )->getLon() );
-    TMinMax <double> lat_interval ( ( * std::min_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLat () ) )->getLat(),
-            ( * std::max_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLat () ) )->getLat() );
+        //Get limits
+        TMinMax <double> lon_interval ( ( * std::min_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLon () ) )->getLon(),
+                ( * std::max_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLon () ) )->getLon() );
+        TMinMax <double> lat_interval ( ( * std::min_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLat () ) )->getLat(),
+                ( * std::max_element ( nl_reference.begin(), nl_reference.end(), sortPointsByLat () ) )->getLat() );
 
-    //Create data structures for the graticule representation
-    unsigned int index = 0;
-    TMeridiansListF <double> ::Type meridians_exp;
-    TParallelsListF <double> ::Type parallels_exp;
-    Container <Node3DCartesian <double> *> mer_par_points;
+        //Create data structures for the graticule representation
+        unsigned int index = 0;
+        TMeridiansListF <double> ::Type meridians_exp;
+        TParallelsListF <double> ::Type parallels_exp;
+        Container <Node3DCartesian <double> *> mer_par_points;
 
-    //Set font height
-    const double font_height = 0.05 * proj->getR() * std::min ( analysis_parameters.lat_step, analysis_parameters.lon_step ) * M_PI / 180;
+        //Set font height
+        const double font_height = 0.05 * proj->getR() * std::min ( analysis_parameters.lat_step, analysis_parameters.lon_step ) * M_PI / 180;
 
-    //Create graticule
-    double alpha = sl[0].getAlpha();
-    Graticule::computeGraticule ( proj, lat_interval, lon_interval, analysis_parameters.lat_step, analysis_parameters.lon_step, 0.1 * analysis_parameters.lat_step, 0.1 * analysis_parameters.lon_step, alpha, TransformedGraticule, meridians_exp, parallels_exp, &mer_par_points, index );
+        //Create graticule
+        double alpha = sl[i].getAlpha();
+        Graticule::computeGraticule ( proj, lat_interval, lon_interval, analysis_parameters.lat_step, analysis_parameters.lon_step, 0.1 * analysis_parameters.lat_step, 0.1 * analysis_parameters.lon_step, alpha, TransformedGraticule, meridians_exp, parallels_exp, &mer_par_points, index );
 
-    if (meridians_exp.size() == 0 && parallels_exp.size() == 0) {
-        err << "No projection was found.";
-        return false;
+        if (meridians_exp.size() == 0 && parallels_exp.size() == 0) {
+            err << "No projection was found.";
+            return false;
+        }
+
+        //Export graticule into GeoJSON
+        GeoJSONExport::exportGraticule( out, meridians_exp, parallels_exp, mer_par_points, font_height, analysis_parameters.lat_step, analysis_parameters.lon_step
+        );
+        if (i != std::min ( ( unsigned int ) analysis_parameters.exported_graticule, sl.size() ) - 1) {
+            out << "#"; // writes the separator
+        }
     }
-
-    //Export graticule into GeoJSON
-    GeoJSONExport::exportGraticule( out, meridians_exp, parallels_exp, mer_par_points, font_height, analysis_parameters.lat_step, analysis_parameters.lon_step );
 
     blackhole.close();
     return true;

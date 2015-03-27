@@ -4,6 +4,7 @@
 
 
 #include <cstdlib>
+#include <cstring>
 #include <map>
 #include <sstream>
 #include <limits>
@@ -252,7 +253,28 @@ void detectproj(const string& id, const Value& json) {
     stringstream err;
 
     if (detectproj(interest_test_points, interest_ref_points, out, err)) {
-        set_proj(id, out.str());
+        Reader reader;
+        FastWriter writer;
+        Value projections;
+        char* pch;
+        char* str = (char*) malloc(sizeof(char)* out.str().length());
+        strcpy(str, out.str().c_str());
+
+        pch = strtok(str, "#");
+        while (pch != NULL) {
+            Value geojson;
+            if (!reader.parse(pch, pch + strlen(pch), geojson)) {
+                free(str);
+                set_detectproj_error(id, "Error at parsing GeoJSON");
+                return;
+            }
+            Value projection;
+            projection["geojson"] = geojson;
+            projections.append(projection);
+            pch = strtok (NULL, "#");
+        }
+        free(str);
+        set_proj(id, writer.write(projections));
     } else {
         set_detectproj_error(id, err.str());
     }

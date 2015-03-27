@@ -16,7 +16,7 @@ void output_init() {
 
 void print(const std::string& msg) {
     print_header();
-    FCGI_printf("{\"status\" : \"Done\", \"geojson\": %s}", msg.c_str());
+    FCGI_printf("{\"status\" : \"Done\", \"projections\": %s}", msg.c_str());
 }
 
 void print_processed() {
