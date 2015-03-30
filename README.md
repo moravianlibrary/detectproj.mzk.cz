@@ -87,14 +87,13 @@ Be aware that the lighttpd server running inside the docker container must be ab
 For building your own local docker image, you simple type
 
 ```
-make
-
+$ make
 ```
 
 in the root directory of this github project. Now you are able to run your own build by command
 
 ```
-docker run -p 8080:80 -v /var/detectproj:/data detectproj
+$ docker run -p 8080:80 -v /var/detectproj:/data detectproj
 ```
 
 ## Setting detectproj as service using init script in debian based systems
@@ -181,8 +180,8 @@ Usually more applications listening on port 80 run on one server. For this purpo
 one application that will be accept all connections on the port 80 and it will forward them to appropriate application.
 Assume that our detectproj listening on port 9001, than you can setup the lighttpd followingly:
 
-1. Install lighttpd
-2. Create file /etc/lighttpd/conf-available/20-detectproj.conf with content
+* Install lighttpd
+* Create file /etc/lighttpd/conf-available/20-detectproj.conf with content
 ```bash
 $HTTP["host"] == "detectproj.mzk.cz" {
   proxy.server  = ( "" =>
@@ -203,7 +202,7 @@ $HTTP["host"] == "www.detectproj.mzk.cz" {
                   )
 }
 ```
-3. Run
+* Run
 ```
 # lighttpd-enable-mod proxy
 # lighttpd-enable-mod detectproj
