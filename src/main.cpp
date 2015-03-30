@@ -244,10 +244,10 @@ void detectproj(const string& id, const Value& json) {
     vector<Node3DCartesian <double> *> interest_test_points;
     vector<Point3DGeographic <double> *> interest_ref_points;
 
-    find_interest_points(test_points, ref_points, interest_test_points, interest_ref_points, 3, 3);
+    find_interest_points(test_points, ref_points, interest_test_points, interest_ref_points, 4, 4);
 
     assert(interest_test_points.size() == interest_ref_points.size());
-    assert(interest_test_points.size() == 9);
+    assert(interest_test_points.size() == 16);
     assert(test_points.empty());
     assert(ref_points.empty());
 
