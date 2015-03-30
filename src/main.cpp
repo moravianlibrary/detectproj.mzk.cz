@@ -39,7 +39,7 @@ void detectproj(const string& id, const Value& json);
 
 bool run_detectproj(const string& id, const Value& json);
 
-template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y);
+template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y, ostream& err);
 
 void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vector<Point3DGeographic <double> *>& ref_points, vector<Node3DCartesian <double> *>& out_test, vector<Point3DGeographic <double> *>& out_ref, int m, int n);
 
@@ -122,34 +122,34 @@ bool parse_json(istream& is, Value& root) {
     return reader.parse(is, root);
 }
 
-template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y) {
+template<typename T> bool parse_points(const Value& json, vector<T*>& points, const string& key_x, const string& key_y, ostream& err) {
     if (!json.isMember(CONTROL_POINTS)) {
-        print_error("You must specify " + CONTROL_POINTS);
+        err << "You must specify " << CONTROL_POINTS;
         return false;
     }
     Value control_points = json[CONTROL_POINTS];
     if (!control_points.isArray()) {
-        print_error(CONTROL_POINTS + " must be Array.");
+        err << CONTROL_POINTS << " must be Array.";
         return false;
     }
     for (int i = 0; i < control_points.size(); i++) {
         Value item = control_points[i];
         if (!item.isMember(key_x)) {
-            print_error(key_x + " is not presented.");
+            err << key_x << " is not presented.";
             return false;
         }
         if (!item.isMember(key_y)) {
-            print_error(key_y + " is not presented.");
+            err << key_y << " is not presented.";
             return false;
         }
         Value vx = item[key_x];
         Value vy = item[key_y];
         if (!vx.isDouble()) {
-            print_error(key_x + " must be type of double.");
+            err << key_x << " must be type of double.";
             return false;
         }
         if (!vy.isDouble()) {
-            print_error(key_y + " must be type of double.");
+            err << key_y << " must be type of double.";
             return false;
         }
         T* point = new T(vx.asDouble(), vy.asDouble());
@@ -225,13 +225,15 @@ void find_interest_points(vector<Node3DCartesian <double> *>& test_points, vecto
 void detectproj(const string& id, const Value& json) {
     vector<Node3DCartesian <double> *> test_points;
     vector<Point3DGeographic <double> *> ref_points;
+    stringstream out;
+    stringstream err;
 
-    if (!parse_points<Node3DCartesian <double> >(json, test_points, TEST_POINT_X, TEST_POINT_Y)) {
-        set_error(id, "Error at parsing JSON.");
+    if (!parse_points<Node3DCartesian <double> >(json, test_points, TEST_POINT_X, TEST_POINT_Y, err)) {
+        set_error(id, err.str());
         return;
     }
-    if (!parse_points<Point3DGeographic <double> >(json, ref_points, REF_POINT_X, REF_POINT_Y)) {
-        set_error(id, "Error at parsing JSON.");
+    if (!parse_points<Point3DGeographic <double> >(json, ref_points, REF_POINT_X, REF_POINT_Y, err)) {
+        set_error(id, err.str());
         return;
     }
     for (vector<Node3DCartesian <double> *>::iterator it = test_points.begin(); it != test_points.end(); it++) {
@@ -248,9 +250,6 @@ void detectproj(const string& id, const Value& json) {
     assert(interest_test_points.size() == 9);
     assert(test_points.empty());
     assert(ref_points.empty());
-
-    stringstream out;
-    stringstream err;
 
     if (detectproj(interest_test_points, interest_ref_points, out, err)) {
         Reader reader;
