@@ -144,12 +144,12 @@ template<typename T> bool parse_points(const Value& json, vector<T*>& points, co
         }
         Value vx = item[key_x];
         Value vy = item[key_y];
-        if (!vx.isDouble()) {
-            err << key_x << " must be type of double.";
+        if (!vx.isNumeric()) {
+            err << key_x << " must be number.";
             return false;
         }
-        if (!vy.isDouble()) {
-            err << key_y << " must be type of double.";
+        if (!vy.isNumeric()) {
+            err << key_y << " must be number.";
             return false;
         }
         T* point = new T(vx.asDouble(), vy.asDouble());
