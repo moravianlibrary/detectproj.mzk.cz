@@ -2,6 +2,7 @@
 #define Detectproj_H
 
 #include <vector>
+#include <utility>
 #include <ostream>
 
 #include "libalgo/source/structures/point/Node3DCartesianProjected.h"
@@ -26,6 +27,7 @@
 
 #include "libalgo/source/io/File.h"
 #include "libalgo/source/io/GeoJSONExport.h"
+#include "libalgo/source/algorithms/projectiontoproj4/ProjectionToProj4.h"
 
 #include "libalgo/source/exceptions/Error.h"
 #include "libalgo/source/exceptions/ErrorMathInvalidArgument.h"
@@ -46,6 +48,11 @@ extern const char* PROJECTIONS_FILE;
 
 void detectproj_init();
 
-bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out, std::ostream& err);
+bool detectproj(
+        const std::vector<Node3DCartesian <double> *>& test_points,
+        const std::vector<Point3DGeographic <double> *>& ref_points,
+        std::vector<std::pair<std::string, std::string> >& proj_exports,
+        std::ostream& err
+);
 
 #endif

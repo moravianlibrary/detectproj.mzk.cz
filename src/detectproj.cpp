@@ -9,7 +9,12 @@ void detectproj_init() {
     proj_list.load(PROJECTIONS_FILE);
 }
 
-bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, const std::vector<Point3DGeographic <double> *> ref_points, std::ostream& out, std::ostream& err) {
+bool detectproj(
+        const std::vector<Node3DCartesian <double> *>& test_points,
+        const std::vector<Point3DGeographic <double> *>& ref_points,
+        std::vector<std::pair<std::string, std::string> >& proj_exports,
+        std::ostream& err
+) {
     std::ofstream blackhole("/dev/null");
     TAnalysisParameters <double> analysis_parameters;
     TAnalyzedProjParametersList <double> ::Type analyzed_proj_parameters_list;
@@ -219,12 +224,15 @@ bool detectproj(const std::vector<Node3DCartesian <double> *>& test_points, cons
             return false;
         }
 
-        //Export graticule into GeoJSON
-        GeoJSONExport::exportGraticule( out, meridians_exp, parallels_exp, mer_par_points, font_height, analysis_parameters.lat_step, analysis_parameters.lon_step
-        );
-        if (i != std::min ( ( unsigned int ) analysis_parameters.exported_graticule, sl.size() ) - 1) {
-            out << "#"; // writes the separator
-        }
+        std::stringstream proj_exports_ss;
+        // Export graticule into GeoJSON
+        GeoJSONExport::exportGraticule(proj_exports_ss, meridians_exp, parallels_exp,
+            mer_par_points, font_height, analysis_parameters.lat_step,
+            analysis_parameters.lon_step);
+        // Generate Proj4 string
+        std::string proj4 = ProjectionToProj4::ProjectionToProj4String<double>(proj);
+
+        proj_exports.push_back(std::pair<std::string, std::string>(proj_exports_ss.str(), proj4));
     }
 
     blackhole.close();

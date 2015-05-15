@@ -251,28 +251,24 @@ void detectproj(const string& id, const Value& json) {
     assert(test_points.empty());
     assert(ref_points.empty());
 
-    if (detectproj(interest_test_points, interest_ref_points, out, err)) {
+    vector<pair<string, string> > proj_exports;
+
+    if (detectproj(interest_test_points, interest_ref_points, proj_exports, err)) {
         Reader reader;
         FastWriter writer;
         Value projections;
-        char* pch;
-        char* str = (char*) malloc(sizeof(char)* out.str().length());
-        strcpy(str, out.str().c_str());
 
-        pch = strtok(str, "#");
-        while (pch != NULL) {
+        for (vector<pair<string, string> >::const_iterator it = proj_exports.begin(); it != proj_exports.end(); it++) {
             Value geojson;
-            if (!reader.parse(pch, pch + strlen(pch), geojson)) {
-                free(str);
+            if (!reader.parse(it->first, geojson)) {
                 set_detectproj_error(id, "Error at parsing GeoJSON");
                 return;
             }
             Value projection;
             projection["geojson"] = geojson;
+            projection["proj4"] = it->second;
             projections.append(projection);
-            pch = strtok (NULL, "#");
         }
-        free(str);
         set_proj(id, writer.write(projections));
     } else {
         set_detectproj_error(id, err.str());
