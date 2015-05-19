@@ -43,6 +43,14 @@ COPY src/detectproj.h /build/detectproj/detectproj.h
 
 RUN g++ /build/detectproj/*.cpp -ansi -O2 -lfcgi -ljsoncpp -lalgo -lsqlite3 -lm -o /usr/local/bin/detectproj
 
+# sample-viewer
+COPY sample-viewer/ajax-loader.gif /var/www/ajax-loader.gif
+COPY sample-viewer/OpenLayers.js /var/www/OpenLayers.js
+COPY sample-viewer/theme /var/www/theme
+COPY sample-viewer/index.html /var/www/index.html
+COPY sample-viewer/index.css /var/www/index.css
+COPY sample-viewer/index.js /var/www/index.js
+
 COPY init.sh /init.sh
 
 ENTRYPOINT ["/init.sh"]
