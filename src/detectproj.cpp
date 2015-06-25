@@ -19,15 +19,15 @@ bool detectproj(
     TAnalysisParameters <double> analysis_parameters;
     TAnalyzedProjParametersList <double> ::Type analyzed_proj_parameters_list;
 
-    analysis_parameters.analyze_normal_aspect = true;
-    analysis_parameters.analyze_transverse_aspect = true;
-    analysis_parameters.analyze_oblique_aspect = false;
-    analysis_parameters.analysis_type.a_cnd = true;
+    analysis_parameters.analyze_normal_aspect = false;
+    analysis_parameters.analyze_transverse_aspect = false;
+    analysis_parameters.analyze_oblique_aspect = true;
+    analysis_parameters.analysis_type.a_cnd = false;
     analysis_parameters.analysis_type.a_homt = true;
     analysis_parameters.analysis_type.a_helt = true;
     analysis_parameters.analysis_type.a_gn_tf = false;
-    analysis_parameters.analysis_type.a_vd_tf = true;
-    analysis_parameters.analysis_type.a_vd_id = true;
+    analysis_parameters.analysis_type.a_vd_tf = false;
+    analysis_parameters.analysis_type.a_vd_id = false;
 
     Container <Node3DCartesian <double> *> nl_test;
     Container <Point3DGeographic <double> *> nl_reference;
@@ -65,34 +65,34 @@ bool detectproj(
         }
     }
 
-    for ( TAnalyzedProjParametersList <double> ::Type ::const_iterator i_analyzed_projections = analyzed_proj_parameters_list.begin(); i_analyzed_projections != analyzed_proj_parameters_list.end(); ++ i_analyzed_projections )
-    {
-        //Compare with all projections stored in the list of projections
-        for ( TItemsList <Projection <double> *> ::Type ::const_iterator i_projections = proj_list.begin(); i_projections != proj_list.end(); ++ i_projections )
-        {
-            //Compare analyzed projection name with names of projections stored in the list
-            if ( !strcmp ( ( * i_analyzed_projections ).proj_name, ( *i_projections )->getProjectionName() ) )
-            {
-                //Clone analyzed projection
-                Projection <double> *analyzed_proj = ( *i_projections )->clone();
-
-                //Set analyzed projections properties: if not set by user in command line, use default projection values from configuration file
-                //We set lat0 in command line and analyzed projection does not define own lat0 in configuration file
-                if ( ( fabs ( ( * i_analyzed_projections ).lat0 ) <= MAX_LAT0 ) && ( analyzed_proj->getLat0() == 45.0 ) )
-                    analyzed_proj->setLat0 ( ( * i_analyzed_projections ).lat0 );
-
-                //We set latp, lonp in command and analyzed projection does not define own latp,lonp in configuration file (have a normal aspect)
-                if ( ( fabs ( ( * i_analyzed_projections ).latp ) < MAX_LAT ) && ( fabs ( ( * i_analyzed_projections ).lonp ) <= MAX_LON ) && ( analyzed_proj->getCartPole().getLat() == MAX_LAT ) )
-                {
-                    Point3DGeographic <double> cart_pole ( ( * i_analyzed_projections ).latp, ( * i_analyzed_projections ).lonp );
-                    analyzed_proj->setCartPole ( cart_pole );
-                }
-
-                //Add projection to the list of analyzed projections
-                analysis_parameters.analyzed_projections.push_back ( analyzed_proj );
-            }
-        }
-    }
+    // for ( TAnalyzedProjParametersList <double> ::Type ::const_iterator i_analyzed_projections = analyzed_proj_parameters_list.begin(); i_analyzed_projections != analyzed_proj_parameters_list.end(); ++ i_analyzed_projections )
+    // {
+    //     //Compare with all projections stored in the list of projections
+    //     for ( TItemsList <Projection <double> *> ::Type ::const_iterator i_projections = proj_list.begin(); i_projections != proj_list.end(); ++ i_projections )
+    //     {
+    //         //Compare analyzed projection name with names of projections stored in the list
+    //         if ( !strcmp ( ( * i_analyzed_projections ).proj_name, ( *i_projections )->getProjectionName() ) )
+    //         {
+    //             //Clone analyzed projection
+    //             Projection <double> *analyzed_proj = ( *i_projections )->clone();
+    //
+    //             //Set analyzed projections properties: if not set by user in command line, use default projection values from configuration file
+    //             //We set lat0 in command line and analyzed projection does not define own lat0 in configuration file
+    //             if ( ( fabs ( ( * i_analyzed_projections ).lat0 ) <= MAX_LAT0 ) && ( analyzed_proj->getLat0() == 45.0 ) )
+    //                 analyzed_proj->setLat0 ( ( * i_analyzed_projections ).lat0 );
+    //
+    //             //We set latp, lonp in command and analyzed projection does not define own latp,lonp in configuration file (have a normal aspect)
+    //             if ( ( fabs ( ( * i_analyzed_projections ).latp ) < MAX_LAT ) && ( fabs ( ( * i_analyzed_projections ).lonp ) <= MAX_LON ) && ( analyzed_proj->getCartPole().getLat() == MAX_LAT ) )
+    //             {
+    //                 Point3DGeographic <double> cart_pole ( ( * i_analyzed_projections ).latp, ( * i_analyzed_projections ).lonp );
+    //                 analyzed_proj->setCartPole ( cart_pole );
+    //             }
+    //
+    //             //Add projection to the list of analyzed projections
+    //             analysis_parameters.analyzed_projections.push_back ( analyzed_proj );
+    //         }
+    //     }
+    // }
 
     //Find meridians and parallels using RANSAC
     TMeridiansList <double> ::Type meridians;
@@ -104,41 +104,41 @@ bool detectproj(
     Container <VoronoiCell <double> *> vor_cells_test;
     Container <Face <double> *> faces_test;
 
-    //Precompute Voronoi diagram for the test dataset and merge Voronoi cells: only if outliers are not removed
-    if ( analysis_parameters.analysis_type.a_vd_tf )
-    {
-        try
-        {
-            //Compute Voronoi cells with full topology
-            Voronoi2D::VD ( ( Container <Node3DCartesian <double> *> & ) nl_test, nl_vor_test, hl_dt_test, hl_vor_test, vor_cells_test, AppropriateBoundedCells, TopologicApproach, 0, false, NULL );
-            //Are there enough Voronoi cells for analysis? If not, disable analysis
-            analysis_parameters.analysis_type.a_vd_tf = ( faces_test.size() < MIN_BOUNDED_VORONOI_CELLS );
-            //There is enough Voronoi cells for analysis
-            if ( analysis_parameters.analysis_type.a_vd_tf )
-            {
-                //Merge Voronoi cells with all adjacent cells
-                for ( TItemsList <Node3DCartesian <double> *> ::Type ::iterator i_points_test = nl_test.begin(); i_points_test != nl_test.end() ; i_points_test ++ )
-                {
-                    //Get Voronoi cell
-                    VoronoiCell <double> *vor_cell_test = dynamic_cast < VoronoiCell <double> * > ( ( *i_points_test ) -> getFace() );
-                    //Merge Voronoi cell only if exists and it is bounded
-                    Face <double> * face_test = NULL;
-                    if ( ( vor_cell_test != NULL )  && ( vor_cell_test->getBounded() ) )
-                    {
-                        Voronoi2D::mergeVoronoiCellAndAdjacentCells ( vor_cell_test, &face_test, intersections_test, hl_merge_test );
-                    }
-                    //Add face to the list
-                    faces_test.push_back ( face_test );
-                }
-            }
-        }
-        //Throw exception
-        catch ( Error & error )
-        {
-            err << error.getExceptionText();
-            return false;
-        }
-    }
+    // //Precompute Voronoi diagram for the test dataset and merge Voronoi cells: only if outliers are not removed
+    // if ( analysis_parameters.analysis_type.a_vd_tf )
+    // {
+    //     try
+    //     {
+    //         //Compute Voronoi cells with full topology
+    //         Voronoi2D::VD ( ( Container <Node3DCartesian <double> *> & ) nl_test, nl_vor_test, hl_dt_test, hl_vor_test, vor_cells_test, AppropriateBoundedCells, TopologicApproach, 0, false, NULL );
+    //         //Are there enough Voronoi cells for analysis? If not, disable analysis
+    //         analysis_parameters.analysis_type.a_vd_tf = ( faces_test.size() < MIN_BOUNDED_VORONOI_CELLS );
+    //         //There is enough Voronoi cells for analysis
+    //         if ( analysis_parameters.analysis_type.a_vd_tf )
+    //         {
+    //             //Merge Voronoi cells with all adjacent cells
+    //             for ( TItemsList <Node3DCartesian <double> *> ::Type ::iterator i_points_test = nl_test.begin(); i_points_test != nl_test.end() ; i_points_test ++ )
+    //             {
+    //                 //Get Voronoi cell
+    //                 VoronoiCell <double> *vor_cell_test = dynamic_cast < VoronoiCell <double> * > ( ( *i_points_test ) -> getFace() );
+    //                 //Merge Voronoi cell only if exists and it is bounded
+    //                 Face <double> * face_test = NULL;
+    //                 if ( ( vor_cell_test != NULL )  && ( vor_cell_test->getBounded() ) )
+    //                 {
+    //                     Voronoi2D::mergeVoronoiCellAndAdjacentCells ( vor_cell_test, &face_test, intersections_test, hl_merge_test );
+    //                 }
+    //                 //Add face to the list
+    //                 faces_test.push_back ( face_test );
+    //             }
+    //         }
+    //     }
+    //     //Throw exception
+    //     catch ( Error & error )
+    //     {
+    //         err << error.getExceptionText();
+    //         return false;
+    //     }
+    // }
 
     //Compute cartometric analysis_type and create samples
     //Performed + thrown samples = total samples

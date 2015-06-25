@@ -17,7 +17,7 @@ RUN apt-get install -y \
 
 RUN mkdir /build
 RUN cd /build && \
-    wget https://github.com/moravianlibrary/libalgo/archive/1.16.zip -O libalgo.zip && \
+    wget https://github.com/moravianlibrary/libalgo/archive/1.16.1.zip -O libalgo.zip && \
     unzip libalgo.zip && \
     cd libalgo-* && \
     libtoolize && \
