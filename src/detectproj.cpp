@@ -165,7 +165,7 @@ bool detectproj(
         //Perform analysis: minimum least squares
         else
         {
-            CartAnalysis::computeAnalysisForAllSamplesMLS ( sl, proj_list, nl_test, nl_reference, meridians, parallels, faces_test, analysis_parameters,
+            CartAnalysis::computeAnalysisForAllSamplesNLS ( sl, proj_list, nl_test, nl_reference, meridians, parallels, faces_test, analysis_parameters,
                 total_created_or_thrown_samples, &blackhole );
         }
     }
